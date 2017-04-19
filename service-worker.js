@@ -4,17 +4,32 @@
  * Сервис-воркер, обеспечивающий оффлайновую работу избранного
  */
 
-const CACHE_VERSION = '1.0.0-broken';
+const CACHE_VERSION = '1.0.5';
+const ASSETS_TO_CACHE = [
+    'gifs.html',
+    './assets/blocks.js',
+    './assets/star.svg',
+    './assets/style.css',
+    './assets/templates.js',
+    './vendor/kv-keeper.js-1.0.4/kv-keeper.js',
+    './vendor/bem-components-dist-5.0.0/touch-phone/bem-components.dev.js',
+    './vendor/bem-components-dist-5.0.0/touch-phone/bem-components.dev.css'
+];
 
-importScripts('../vendor/kv-keeper.js-1.0.4/kv-keeper.js');
+importScripts('./vendor/kv-keeper.js-1.0.4/kv-keeper.js');
 
-
-self.addEventListener('install', event => {
-    const promise = preCacheAllFavorites()
-        // Вопрос №1: зачем нужен этот вызов?
-        .then(() => self.skipWaiting())
-        .then(() => console.log('[ServiceWorker] Installed!'));
-
+self.addEventListener('install', function(event) {
+    const promise = cacheAssets()
+        .then(function () {
+            preCacheAllFavorites()
+                .then(function () {
+                    // Вопрос №1: зачем нужен этот вызов?
+                    self.skipWaiting()
+                        .then(function () {
+                            console.log('[ServiceWorker] Installed!')
+                        });
+                })
+        });
     event.waitUntil(promise);
 });
 
@@ -68,6 +83,14 @@ function preCacheAllFavorites() {
                     );
                 });
         });
+}
+
+function cacheAssets() {
+    return caches.open(CACHE_VERSION)
+        .then(function (cache) {
+                return cache.addAll(ASSETS_TO_CACHE);
+            }
+        );
 }
 
 // Извлечь из БД добавленные в избранное картинки
@@ -152,7 +175,9 @@ function fetchWithFallbackToCache(request) {
     return fetch(request)
         .catch(() => {
             console.log('[ServiceWorker] Fallback to offline cache:', request.url);
-            return caches.match(request.url);
+            const url = new URL(request.url);
+            const cacheKey = url.origin + url.pathname;
+            return caches.match(cacheKey);
         });
 }
 

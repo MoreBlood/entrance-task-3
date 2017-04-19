@@ -1,4 +1,4 @@
-/**
+    /**
  * @file
  * Клиентский код блоков проекта, собранный в один файл
  *
@@ -466,7 +466,7 @@ modules.define('service-worker', ['i-bem'], function(provide, bem) {
             }
 
             this._serviceWorker
-                .register('./assets/service-worker.js')
+                .register('./service-worker.js')
                 .then(function() {
                     console.log('[ServiceWorkerContainer] ServiceWorker is registered!');
                 })
